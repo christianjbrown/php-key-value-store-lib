@@ -1,11 +1,19 @@
 {
     "name": "christianjbrown/key-value-store",
     "require": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "google/cloud-secret-manager": "^1.12",
+        "christianjbrown/user-friendly-exception": "dev-main"
     },
     "autoload": {
         "psr-4": {
             "ChristianBrown\\KeyValueStore\\": "src/"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "github",
+            "url": "git@github.com:christianjbrown/user-friendly-exception.git"
+        }
+    ]
 }
