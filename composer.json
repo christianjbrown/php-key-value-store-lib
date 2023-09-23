@@ -1,0 +1,11 @@
+{
+    "name": "christianjbrown/key-value-store",
+    "require": {
+        "php": "^8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "ChristianBrown\\KeyValueStore\\": "src/"
+        }
+    }
+}
