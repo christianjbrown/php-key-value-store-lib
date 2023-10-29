@@ -5,7 +5,8 @@
         "google/cloud-secret-manager": "^1.12",
         "christianjbrown/user-friendly-exception": "dev-main",
         "doctrine/dbal": "^3.7",
-        "doctrine/orm": "^2.16"
+        "doctrine/orm": "^2.16",
+        "symfony/cache": "^6.3"
     },
     "autoload": {
         "psr-4": {
