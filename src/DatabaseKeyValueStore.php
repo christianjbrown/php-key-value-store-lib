@@ -25,7 +25,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
         $dbConfig = $dsnParser->parse($dsn);
         $connection = DriverManager::getConnection($dbConfig, $config);
         $this->entityManager = new EntityManager($connection, $config);
-        $this->repository = $this->entityManager->getRepository(self::class);
+        $this->repository = $this->entityManager->getRepository(DatabaseKeyValueStoreEntity::class);
         $this->key = $key;
     }
 
