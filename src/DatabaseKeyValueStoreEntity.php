@@ -7,7 +7,7 @@ namespace ChristianBrown\KeyValueStore;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity('key_value_store')]
 class DatabaseKeyValueStoreEntity
 {
     #[ORM\Id]
