@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ChristianBrown\KeyValueStore;
 
+use ChristianBrown\KeyValueStore\Entity\DatabaseKeyValueStoreEntity;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use Doctrine\ORM\EntityManager;
@@ -19,12 +20,12 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
 
     public function __construct(string $dsn, string $key)
     {
-        $config = ORMSetup::createAttributeMetadataConfiguration(paths: [__DIR__]);
+        $config = ORMSetup::createAttributeMetadataConfiguration(paths: [__DIR__.'/Entity']);
         $dsnParser = new DsnParser();
         $dbConfig = $dsnParser->parse($dsn);
         $connection = DriverManager::getConnection($dbConfig, $config);
         $this->entityManager = new EntityManager($connection, $config);
-        $this->repository = $this->entityManager->getRepository(self::class);
+        $this->repository = $this->entityManager->getRepository(DatabaseKeyValueStoreEntity::class);
         $this->key = $key;
     }
 
@@ -32,7 +33,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
     {
         $ttl = null;
 
-        $keyValueStoreObj = $this->repository->findOneBy(['key' => $this->key]);
+        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
         if ($keyValueStoreObj instanceof DatabaseKeyValueStoreEntity) {
             $ttl = $keyValueStoreObj->getTtl();
         }
@@ -44,7 +45,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
     {
         $value = null;
 
-        $keyValueStoreObj = $this->repository->findOneBy(['key' => $this->key]);
+        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
         if ($keyValueStoreObj instanceof DatabaseKeyValueStoreEntity) {
             $value = $keyValueStoreObj->getValue();
         }
@@ -54,13 +55,16 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
 
     public function setValue(?string $value, ?int $ttl = null): self
     {
-        $keyValueStoreObj = $this->repository->findOneBy(['key' => $this->key]);
-        if (!($keyValueStoreObj instanceof self)) {
+        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
+        if (!($keyValueStoreObj instanceof DatabaseKeyValueStoreEntity)) {
             $keyValueStoreObj = new DatabaseKeyValueStoreEntity();
-            $keyValueStoreObj->setKey($this->key);
+            $keyValueStoreObj->setId($this->key);
         }
         $keyValueStoreObj->setValue($value);
         $keyValueStoreObj->setTtl($ttl);
+
+        $this->entityManager->persist($keyValueStoreObj);
+        $this->entityManager->flush();
 
         return $this;
     }
