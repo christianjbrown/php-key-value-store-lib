@@ -6,7 +6,8 @@
         "christianjbrown/user-friendly-exception": "dev-main",
         "doctrine/dbal": "^3.7",
         "doctrine/orm": "^2.16",
-        "symfony/cache": "^6.3"
+        "symfony/cache": "^6.3",
+        "ext-pdo_mysql": "*"
     },
     "autoload": {
         "psr-4": {
