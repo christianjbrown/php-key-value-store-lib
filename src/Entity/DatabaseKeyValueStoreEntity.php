@@ -13,7 +13,7 @@ class DatabaseKeyValueStoreEntity
 {
     #[ORM\Id]
     #[ORM\Column(type: Types::STRING, nullable: false)]
-    private ?string $key = null;
+    private ?string $id = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?string $ttl = null;
@@ -21,9 +21,9 @@ class DatabaseKeyValueStoreEntity
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $value = null;
 
-    final public function getKey(): ?string
+    final public function getId(): ?string
     {
-        return $this->key;
+        return $this->id;
     }
 
     final public function getTtl(): ?int
@@ -36,9 +36,9 @@ class DatabaseKeyValueStoreEntity
         return $this->value;
     }
 
-    final public function setKey(?string $key): self
+    final public function setId(?string $id): self
     {
-        $this->key = $key;
+        $this->id = $id;
 
         return $this;
     }
