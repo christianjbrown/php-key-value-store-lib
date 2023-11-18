@@ -7,16 +7,16 @@ namespace ChristianBrown\KeyValueStore\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\Table(name: 'key_value_store')]
-class DatabaseKeyValueStoreEntity
+class DatabaseKeyValueStoreEntity implements DatabaseKeyValueStoreEntityInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: Types::STRING, nullable: false)]
     private ?string $id = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?string $ttl = null;
+    private ?int $ttl = null;
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $value = null;
