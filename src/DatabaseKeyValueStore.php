@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace ChristianBrown\KeyValueStore;
 
 use ChristianBrown\KeyValueStore\Entity\DatabaseKeyValueStoreEntity;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Tools\DsnParser;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\ORMSetup;
 
 final class DatabaseKeyValueStore implements KeyValueStoreInterface
 {
@@ -18,13 +14,9 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
     private string $key;
     private EntityRepository $repository;
 
-    public function __construct(string $dsn, string $key)
+    public function __construct(EntityManagerFactoryInterface $entityManagerFactory, string $key)
     {
-        $config = ORMSetup::createAttributeMetadataConfiguration(paths: [__DIR__.'/Entity']);
-        $dsnParser = new DsnParser();
-        $dbConfig = $dsnParser->parse($dsn);
-        $connection = DriverManager::getConnection($dbConfig, $config);
-        $this->entityManager = new EntityManager($connection, $config);
+        $this->entityManager = $entityManagerFactory->getEntityManager();
         $this->repository = $this->entityManager->getRepository(DatabaseKeyValueStoreEntity::class);
         $this->key = $key;
     }

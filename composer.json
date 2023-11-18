@@ -9,15 +9,36 @@
         "symfony/cache": "^6.3",
         "ext-pdo_mysql": "*"
     },
+    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "ChristianBrown\\KeyValueStore\\": "src/"
         }
     },
+    "scripts": {
+        "test": [
+            "./vendor/bin/phpunit && open ./.phpunit.cache/code-coverage-html/index.html"
+        ],
+        "fix": [
+            "./vendor/bin/php-cs-fixer fix ./src ./tests -vvv --config=vendor/christianjbrown/php-cs-fixer-wrapper/rule-sets/risky.php"
+        ],
+        "fix-test": [
+            "@fix",
+            "@test"
+        ]
+    },
     "repositories": [
         {
             "type": "github",
             "url": "git@github.com:christianjbrown/user-friendly-exception.git"
+        },
+        {
+            "type": "github",
+            "url": "git@github.com:christianjbrown/php-cs-fixer-wrapper.git"
         }
-    ]
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^10.4",
+        "christianjbrown/php-cs-fixer-wrapper": "dev-main"
+    }
 }
