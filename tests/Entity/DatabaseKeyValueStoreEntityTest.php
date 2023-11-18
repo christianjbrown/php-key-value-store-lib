@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ChristianBrown\KeyValueStore\Entity;
+namespace ChristianBrown\KeyValueStore\Tests\Entity;
 
+use ChristianBrown\KeyValueStore\Entity\DatabaseKeyValueStoreEntity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

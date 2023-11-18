@@ -12,7 +12,8 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "ChristianBrown\\KeyValueStore\\": "src/"
+            "ChristianBrown\\KeyValueStore\\": "src/",
+            "ChristianBrown\\KeyValueStore\\Tests\\": "tests/"
         }
     },
     "scripts": {

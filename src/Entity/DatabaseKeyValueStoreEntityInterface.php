@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace ChristianBrown\KeyValueStore\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
-
 interface DatabaseKeyValueStoreEntityInterface
 {
     public function getId(): ?string;
