@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ChristianBrown\KeyValueStore;
+namespace ChristianBrown\KeyValueStore\Tests;
 
 use ChristianBrown\KeyValueStore\EntityManagerFactory;
 use Doctrine\DBAL\Exception;
