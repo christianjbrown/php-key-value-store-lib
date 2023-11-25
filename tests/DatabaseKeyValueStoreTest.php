@@ -66,21 +66,7 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetTtlEntityNotExists(): void
     {
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, []);
-        $entityClass = $entity::class;
-
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
-            ->willReturn(null);
-
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
+        $store = $this->getStoreEntityNotExist();
         self::assertNull($store->getTtl());
     }
 
@@ -115,21 +101,7 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetValueEntityNotExists(): void
     {
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, []);
-        $entityClass = $entity::class;
-
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
-            ->willReturn(null);
-
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
+        $store = $this->getStoreEntityNotExist();
         self::assertNull($store->getValue());
     }
 
@@ -240,5 +212,29 @@ final class DatabaseKeyValueStoreTest extends TestCase
 
         $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
         self::assertSame($store, $store->setValue('test-value'));
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getStoreEntityNotExist(): DatabaseKeyValueStore
+    {
+        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, []);
+        $entityClass = $entity::class;
+
+        $repo = $this->createMock(EntityRepository::class);
+        $repo->expects(self::once())
+            ->method('findOneBy')
+            ->with(['id' => 'test-key'])
+            ->willReturn(null);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')
+            ->with($entityClass)
+            ->willReturn($repo);
+
+        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
+
+        return $store;
     }
 }
