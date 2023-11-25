@@ -1,15 +1,18 @@
 <?php
 
+/**
+ * @noinspection MethodShouldBeFinalInspection
+ */
+
 declare(strict_types=1);
 
-namespace ChristianBrown\KeyValueStore\Entity;
+namespace ChristianBrown\KeyValueStore;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
-#[ORM\Table(name: 'key_value_store')]
-class DatabaseKeyValueStoreEntity implements DatabaseKeyValueStoreEntityInterface
+#[ORM\MappedSuperclass]
+abstract class AbstractDatabaseKeyValueStoreEntity implements DatabaseKeyValueStoreEntityInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: Types::STRING, nullable: false)]
@@ -21,38 +24,32 @@ class DatabaseKeyValueStoreEntity implements DatabaseKeyValueStoreEntityInterfac
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $value = null;
 
-    final public function getId(): ?string
+    public function getId(): ?string
     {
         return $this->id;
     }
 
-    final public function getTtl(): ?int
+    public function getTtl(): ?int
     {
         return $this->ttl;
     }
 
-    final public function getValue(): ?string
+    public function getValue(): ?string
     {
         return $this->value;
     }
 
-    final public function setId(?string $id): self
+    public function setId(?string $id): DatabaseKeyValueStoreEntityInterface
     {
         $this->id = $id;
 
         return $this;
     }
 
-    final public function setTtl(?int $ttl): self
-    {
-        $this->ttl = $ttl;
-
-        return $this;
-    }
-
-    final public function setValue(?string $value): self
+    public function setValue(?string $value, ?int $ttl = null): DatabaseKeyValueStoreEntityInterface
     {
         $this->value = $value;
+        $this->ttl = $ttl;
 
         return $this;
     }

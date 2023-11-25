@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace ChristianBrown\KeyValueStore\Entity;
+namespace ChristianBrown\KeyValueStore;
 
-interface DatabaseKeyValueStoreEntityInterface
+interface DatabaseKeyValueStoreEntityInterface extends KeyValueStoreInterface
 {
     public function getId(): ?string;
 
@@ -14,7 +14,5 @@ interface DatabaseKeyValueStoreEntityInterface
 
     public function setId(?string $id): self;
 
-    public function setTtl(?int $ttl): self;
-
-    public function setValue(?string $value): self;
+    public function setValue(?string $value, ?int $ttl = null): self;
 }
