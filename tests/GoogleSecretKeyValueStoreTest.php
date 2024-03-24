@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ChristianBrown\KeyValueStore\Tests;
 
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStore;
-use ChristianBrown\UserFriendlyException\UserFriendlyException;
+use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface;
 use Exception;
 use Google\ApiCore\ApiException;
 use Google\Cloud\SecretManager\V1\AccessSecretVersionResponse;
@@ -79,7 +79,7 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testGetValueApiException(): void
     {
-        $this->expectException(UserFriendlyException::class);
+        $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
         $this->expectExceptionMessage('Failed to retrieve the "here" secret value.');
 
         $client = $this->createMock(SecretManagerServiceClient::class);
@@ -139,7 +139,7 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testSetValueApiException(): void
     {
-        $this->expectException(UserFriendlyException::class);
+        $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
         $this->expectExceptionMessage('Failed to update the "here" secret value.');
 
         $client = $this->createMock(SecretManagerServiceClient::class);
