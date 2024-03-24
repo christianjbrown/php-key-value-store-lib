@@ -1,5 +1,6 @@
 {
-    "name": "christianjbrown/key-value-store",
+    "name": "christianjbrown/php-key-value-store-lib",
+    "type": "library",
     "require": {
         "php": "^8.2",
         "ext-pdo_mysql": "*",
