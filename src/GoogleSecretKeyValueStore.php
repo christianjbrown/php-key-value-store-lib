@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ChristianBrown\KeyValueStore;
 
-use ChristianBrown\UserFriendlyException\UserFriendlyException;
 use Exception;
 use Google\ApiCore\ApiException;
 use Google\Cloud\SecretManager\V1\SecretManagerServiceClient;
@@ -51,7 +50,9 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
             $secretVersionName = $this->secretPath.self::VERSION_LATEST;
             $response = $this->client->accessSecretVersion($secretVersionName);
         } catch (ApiException) {
-            throw new UserFriendlyException(sprintf('Failed to retrieve the "%s" secret value.', basename($this->secretPath)));
+            $message = sprintf('Failed to retrieve the "%s" secret value.', basename($this->secretPath));
+
+            throw new GoogleSecretKeyValueStoreException($message);
         }
         $payload = $response->getPayload();
         if ($payload instanceof SecretPayload) {
@@ -71,7 +72,9 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
             $payload = new SecretPayload(['data' => $value]);
             $this->client->addSecretVersion($this->secretPath, $payload);
         } catch (ApiException) {
-            throw new UserFriendlyException(sprintf('Failed to update the "%s" secret value.', basename($this->secretPath)));
+            $message = sprintf('Failed to update the "%s" secret value.', basename($this->secretPath));
+
+            throw new GoogleSecretKeyValueStoreException($message);
         }
 
         return $this;
