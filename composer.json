@@ -4,9 +4,9 @@
     "require": {
         "php": "^8.2",
         "ext-pdo_mysql": "*",
-        "google/cloud-secret-manager": "^1.12",
         "doctrine/dbal": "^3.7",
         "doctrine/orm": "^2.16",
+        "google/cloud-secret-manager": "^1.12",
         "symfony/cache": "^6.3"
     },
     "require-dev": {
