@@ -5,7 +5,7 @@
         "php": "^8.2",
         "ext-pdo_mysql": "*",
         "doctrine/dbal": "^3.7",
-        "doctrine/orm": "^2.16",
+        "doctrine/orm": "^3.1",
         "google/cloud-secret-manager": "^1.12",
         "symfony/cache": "^6.3"
     },
