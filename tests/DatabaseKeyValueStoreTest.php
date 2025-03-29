@@ -32,7 +32,6 @@ final class DatabaseKeyValueStoreTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
 
         new DatabaseKeyValueStore($em, stdClass::class, 'test-key');
-
     }
 
     /**

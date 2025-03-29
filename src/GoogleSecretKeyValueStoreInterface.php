@@ -6,7 +6,7 @@ namespace ChristianBrown\KeyValueStore;
 
 interface GoogleSecretKeyValueStoreInterface extends KeyValueStoreInterface
 {
-    public const VERSION_LATEST = '/versions/latest';
+    public const string VERSION_LATEST = '/versions/latest';
 
     public static function create(string $secretPath): self;
 }
