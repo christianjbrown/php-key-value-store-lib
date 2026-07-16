@@ -1,6 +1,6 @@
 {
     "name": "christianjbrown/php-key-value-store-lib",
-    "description": "A thin, strongly-typed PHP 8.5+ library of interchangeable key-value store implementations (database, Google Secret Manager, in-memory) behind a single mockable interface.",
+    "description": "A thin, strongly-typed PHP 8.5+ library of interchangeable key-value store implementations (database, Google Secret Manager, Google Firestore, in-memory) behind a single mockable interface.",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -8,6 +8,7 @@
         "store",
         "doctrine",
         "google-secret-manager",
+        "google-firestore",
         "configuration"
     ],
     "authors": [
@@ -26,7 +27,8 @@
     "require-dev": {
         "christianjbrown/php-code-quality-scripts": "dev-main",
         "phpstan/phpstan": "^2.0",
-        "phpunit/phpunit": "^12.0"
+        "phpunit/phpunit": "^12.0",
+        "google/cloud-firestore": "^1.55 || ^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -67,5 +69,8 @@
             "url": "git@github.com:christianjbrown/php-code-quality-scripts.git"
         }
     ],
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "suggest": {
+        "google/cloud-firestore": "Required only for FirestoreKeyValueStore (pulls in ext-grpc)."
+    }
 }
