@@ -12,10 +12,12 @@ It exists to hold small pieces of state — configuration flags, refresh tokens,
 consumed by other libraries and a cloud function, so **the public API must not change** (class names,
 the `ChristianBrown\KeyValueStore\` namespace, and every public method signature are frozen).
 
-Three stores ship today:
+Four stores ship today:
 
 - **`DatabaseKeyValueStore`** — persists to a MySQL table via Doctrine ORM, keyed by a string id.
 - **`GoogleSecretKeyValueStore`** — reads/writes a Google Secret Manager secret (no TTL support).
+- **`FirestoreKeyValueStore`** — reads/writes a single Google Firestore document (serverless,
+  connectionless; TTL via an `expiresAt` field).
 - **`MemoryKeyValueStore`** — a per-process in-memory value (mostly for tests/defaults).
 
 ## Commands
@@ -66,6 +68,22 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
   Secret-access failures are normalized into `GoogleSecretKeyValueStoreException`.
 - **`GoogleSecretKeyValueStoreException` / `GoogleSecretKeyValueStoreExceptionInterface`** — the one
   library-specific exception (a `RuntimeException`), so callers can `catch` the interface.
+- **`FirestoreKeyValueStore` / `FirestoreKeyValueStoreInterface`** — wraps Google's `FirestoreClient`.
+  It is serverless and connectionless — no VPC connector (unlike Redis) or Cloud SQL connection
+  (unlike the database store). The **constructor-injected** collaborator is a single
+  `Google\Cloud\Firestore\DocumentReference` (the one document this store reads/writes), the cleanest
+  mockable seam; the static `create(FirestoreClient $client, string $collection, string $documentId)`
+  factory resolves `$client->collection($collection)->document($documentId)` and news up the store.
+  The document holds two fields (`FIELD_VALUE`, `FIELD_EXPIRES_AT` on the interface): the string value
+  and an integer `expiresAt` unix timestamp. `setValue()` writes both via `DocumentReference::set()`,
+  storing `expiresAt` as `time() + $ttl` (or `null`). `getValue()` reads the snapshot — `null` when the
+  document does not exist or `expiresAt` has passed, else the value; `getTtl()` returns
+  `expiresAt - time()` (or `null`). Expiry guards are split into sequential single-condition `if`s for
+  path coverage. **`google/cloud-firestore` is a `require-dev` + `suggest`, not a hard `require`** — it
+  pulls in `ext-grpc`, which no other store needs, so it stays optional; consumers who use this store
+  install it (and `ext-grpc`) themselves. Because `ext-grpc` isn't present locally or in CI, the
+  `composer install` in `.github/workflows/ci.yml` passes `--ignore-platform-req=ext-grpc` (the tests
+  mock the whole Firestore chain, so grpc is never loaded at runtime).
 - **`MemoryKeyValueStore` / `MemoryKeyValueStoreInterface`** — trivial in-process holder.
 
 ## Conventions (follow all of these)

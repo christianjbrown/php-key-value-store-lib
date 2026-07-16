@@ -7,10 +7,12 @@ behind one tiny contract — `KeyValueStoreInterface` — so you can read, write
 `?string` value (with an optional `?int` TTL) without caring where it actually lives. It's built for
 small pieces of state such as configuration flags, cursors, or OAuth refresh tokens.
 
-Three implementations ship today:
+Four implementations ship today:
 
 - **Database** (`DatabaseKeyValueStore`) — persists to MySQL via Doctrine ORM, keyed by a string id.
 - **Google Secret Manager** (`GoogleSecretKeyValueStore`) — reads/writes a Secret Manager secret.
+- **Google Firestore** (`FirestoreKeyValueStore`) — reads/writes a single Firestore document; serverless
+  and connectionless, with TTL support via an `expiresAt` field.
 - **In-memory** (`MemoryKeyValueStore`) — a per-process value, handy for tests and defaults.
 
 Because they share one interface, calling code can accept a `KeyValueStoreInterface` and stay
@@ -114,6 +116,43 @@ $store = new GoogleSecretKeyValueStore($client, 'projects/my-project/secrets/my-
 
 :warning: Secret Manager has no notion of a TTL, so `getTtl()` — and any `setValue()` call that
 supplies a non-null `$ttl` — throws a `RuntimeException`.
+
+
+
+### :fire: Google Firestore key-value store
+
+Reads and writes a single [Google Firestore](https://cloud.google.com/firestore) document. It is
+serverless and connectionless — no VPC connector or database connection to manage. The value and an
+integer `expiresAt` unix timestamp are stored as two fields on the document. The static `create()`
+factory resolves the document from a `FirestoreClient`, a collection name, and a document id:
+
+> **Optional dependency.** `google/cloud-firestore` is not a hard requirement of this library (it
+> pulls in `ext-grpc`), so it is only suggested — install it yourself if you use this store:
+> `composer require google/cloud-firestore` (and enable `ext-grpc`). The other stores are unaffected.
+
+
+```php
+use ChristianBrown\KeyValueStore\FirestoreKeyValueStore;
+use Google\Cloud\Firestore\FirestoreClient;
+
+$firestoreClient = new FirestoreClient();
+
+$store = FirestoreKeyValueStore::create($firestoreClient, 'kv', 'my-key');
+
+$store->setValue('a-secret-token', 3600); // value + optional TTL (seconds)
+
+$value = $store->getValue(); // 'a-secret-token', or null if unset or expired
+$ttl   = $store->getTtl();   // remaining seconds, or null when no TTL was set
+```
+
+`getValue()` returns `null` when the document does not exist or its `expiresAt` has passed; `getTtl()`
+returns the remaining seconds (`expiresAt - time()`), or `null` when no expiry is set. You can also
+inject a pre-built `Google\Cloud\Firestore\DocumentReference` directly via the constructor (useful for
+tests):
+
+```php
+$store = new FirestoreKeyValueStore($documentReference);
+```
 
 
 
