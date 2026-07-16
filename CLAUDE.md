@@ -14,7 +14,8 @@ the `ChristianBrown\KeyValueStore\` namespace, and every public method signature
 
 Four stores ship today:
 
-- **`DatabaseKeyValueStore`** — persists to a MySQL table via Doctrine ORM, keyed by a string id.
+- **`DatabaseKeyValueStore`** — persists to a database table via Doctrine ORM (any Doctrine DBAL
+  platform — MySQL/MariaDB, PostgreSQL, SQLite, …), keyed by a string id.
 - **`GoogleSecretKeyValueStore`** — reads/writes a Google Secret Manager secret (no TTL support).
 - **`FirestoreKeyValueStore`** — reads/writes a single Google Firestore document (serverless,
   connectionless; TTL via an `expiresAt` field).
