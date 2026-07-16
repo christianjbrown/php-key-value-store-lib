@@ -7,6 +7,7 @@ namespace ChristianBrown\KeyValueStore\Tests;
 use ChristianBrown\KeyValueStore\AbstractDatabaseKeyValueStoreEntity;
 use ChristianBrown\KeyValueStore\DatabaseKeyValueStore;
 use ChristianBrown\KeyValueStore\DatabaseKeyValueStoreEntityInterface;
+use ChristianBrown\KeyValueStore\DatabaseKeyValueStoreInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use InvalidArgumentException;
@@ -27,11 +28,11 @@ final class DatabaseKeyValueStoreTest extends TestCase
     public function testConstructorInvalidClass(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(sprintf('Entity class %s must implement %s', stdClass::class, DatabaseKeyValueStoreEntityInterface::class));
+        $this->expectExceptionMessage(sprintf(DatabaseKeyValueStoreInterface::ENTITY_CLASS_INVALID_SPRINTF, stdClass::class, DatabaseKeyValueStoreEntityInterface::class));
 
-        $em = $this->createMock(EntityManagerInterface::class);
+        $entityManager = self::createStub(EntityManagerInterface::class);
 
-        new DatabaseKeyValueStore($em, stdClass::class, 'test-key');
+        new DatabaseKeyValueStore($entityManager, stdClass::class, 'test-key');
     }
 
     /**
@@ -39,24 +40,11 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetTtlEntityExists(): void
     {
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, ['getTtl']);
-        $entity->expects(self::once())
-            ->method('getTtl')
-            ->willReturn(42);
-        $entityClass = $entity::class;
+        $entity = new TestDatabaseKeyValueStoreEntity();
+        $entity->setValue('test-value', 42);
 
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
-            ->willReturn($entity);
+        $store = $this->createStore($entity);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
         self::assertSame(42, $store->getTtl());
     }
 
@@ -65,7 +53,8 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetTtlEntityNotExists(): void
     {
-        $store = $this->getStoreEntityNotExist();
+        $store = $this->createStore(null);
+
         self::assertNull($store->getTtl());
     }
 
@@ -74,24 +63,11 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetValueEntityExists(): void
     {
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, ['getValue']);
-        $entity->expects(self::once())
-            ->method('getValue')
-            ->willReturn('test-value');
-        $entityClass = $entity::class;
+        $entity = new TestDatabaseKeyValueStoreEntity();
+        $entity->setValue('test-value');
 
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
-            ->willReturn($entity);
+        $store = $this->createStore($entity);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
         self::assertSame('test-value', $store->getValue());
     }
 
@@ -100,7 +76,8 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testGetValueEntityNotExists(): void
     {
-        $store = $this->getStoreEntityNotExist();
+        $store = $this->createStore(null);
+
         self::assertNull($store->getValue());
     }
 
@@ -109,58 +86,27 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testSetValueEntityExists(): void
     {
-        $valueSet = false;
-        $persistCalled = false;
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, ['setValue']);
-        $entity->expects(self::once())
-            ->method('setValue')
-            ->with('test-value')
-            ->willReturnCallback(
-                static function () use ($entity, &$valueSet) {
-                    $valueSet = true;
+        $entity = new TestDatabaseKeyValueStoreEntity();
+        $entity->setId('test-key');
 
-                    return $entity;
-                }
-            );
-        $entityClass = $entity::class;
-
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')
             ->willReturn($entity);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects(self::once())
+        $entityManager = self::createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')
+            ->willReturn($repository);
+        $entityManager->expects(self::once())
             ->method('persist')
-            ->with(
-                self::callback(
-                    // Make sure setValue was called before persist
-                    static function ($arg) use ($entity, &$valueSet, &$persistCalled) {
-                        self::assertSame($entity, $arg);
-                        self::assertTrue($valueSet);
+            ->with(self::identicalTo($entity));
+        $entityManager->expects(self::once())
+            ->method('flush');
 
-                        $persistCalled = true;
+        $store = new DatabaseKeyValueStore($entityManager, TestDatabaseKeyValueStoreEntity::class, 'test-key');
 
-                        return true;
-                    }
-                )
-            );
-        $em->expects(self::once())
-            ->method('flush')
-            ->willReturnCallback(
-                // Make sure persist was called before flush
-                static function () use (&$persistCalled): void {
-                    self::assertTrue($persistCalled);
-                }
-            );
-
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
-        self::assertSame($store, $store->setValue('test-value'));
+        self::assertSame($store, $store->setValue('updated-value', 7));
+        self::assertSame('updated-value', $entity->getValue());
+        self::assertSame(7, $entity->getTtl());
     }
 
     /**
@@ -168,72 +114,47 @@ final class DatabaseKeyValueStoreTest extends TestCase
      */
     public function testSetValueEntityNotExists(): void
     {
-        $persistCalled = false;
-
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, []);
-        $entityClass = $entity::class;
-
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')
             ->willReturn(null);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects(self::once())
+        $entityManager = self::createMock(EntityManagerInterface::class);
+        $entityManager->method('getRepository')
+            ->willReturn($repository);
+        $entityManager->expects(self::once())
             ->method('persist')
-            ->with(
-                self::callback(
-                    // Make sure setValue was called before persist
-                    static function ($arg) use (&$persistCalled) {
-                        self::assertInstanceOf(DatabaseKeyValueStoreEntityInterface::class, $arg);
-                        self::assertSame('test-key', $arg->getId());
-                        self::assertSame('test-value', $arg->getValue());
+            ->with(self::callback(
+                static function (object $entity): bool {
+                    self::assertInstanceOf(DatabaseKeyValueStoreEntityInterface::class, $entity);
+                    self::assertSame('test-key', $entity->getId());
+                    self::assertSame('created-value', $entity->getValue());
 
-                        $persistCalled = true;
+                    return true;
+                },
+            ));
+        $entityManager->expects(self::once())
+            ->method('flush');
 
-                        return true;
-                    }
-                )
-            );
-        $em->expects(self::once())
-            ->method('flush')
-            ->willReturnCallback(
-                // Make sure persist was called before flush
-                static function () use (&$persistCalled): void {
-                    self::assertTrue($persistCalled);
-                }
-            );
+        $store = new DatabaseKeyValueStore($entityManager, TestDatabaseKeyValueStoreEntity::class, 'test-key');
 
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
-        self::assertSame($store, $store->setValue('test-value'));
+        self::assertSame($store, $store->setValue('created-value'));
     }
 
     /**
+     * Builds a store whose repository returns the given entity (or null) for the key.
+     *
      * @throws Exception
      */
-    private function getStoreEntityNotExist(): DatabaseKeyValueStore
+    private function createStore(?DatabaseKeyValueStoreEntityInterface $entity): DatabaseKeyValueStore
     {
-        $entity = $this->createPartialMock(AbstractDatabaseKeyValueStoreEntity::class, []);
-        $entityClass = $entity::class;
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')
+            ->willReturn($entity);
 
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->expects(self::once())
-            ->method('findOneBy')
-            ->with(['id' => 'test-key'])
-            ->willReturn(null);
+        $entityManager = self::createStub(EntityManagerInterface::class);
+        $entityManager->method('getRepository')
+            ->willReturn($repository);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')
-            ->with($entityClass)
-            ->willReturn($repo);
-
-        $store = new DatabaseKeyValueStore($em, $entityClass, 'test-key');
-
-        return $store;
+        return new DatabaseKeyValueStore($entityManager, TestDatabaseKeyValueStoreEntity::class, 'test-key');
     }
 }

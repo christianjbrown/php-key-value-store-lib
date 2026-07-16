@@ -8,10 +8,10 @@ use Exception;
 use Google\ApiCore\ApiException;
 use Google\Cloud\SecretManager\V1\SecretManagerServiceClient;
 use Google\Cloud\SecretManager\V1\SecretPayload;
-
 use RuntimeException;
 
 use function basename;
+use function mb_trim;
 use function sprintf;
 
 final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterface
@@ -22,7 +22,7 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
     public function __construct(SecretManagerServiceClient $client, string $secretPath)
     {
         $this->client = $client;
-        $this->secretPath = trim($secretPath, '/');
+        $this->secretPath = mb_trim($secretPath, '/');
     }
 
     public static function create(string $secretPath): GoogleSecretKeyValueStoreInterface
@@ -30,16 +30,15 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
         try {
             $client = new SecretManagerServiceClient();
         } catch (Exception $exception) {
-            throw new RuntimeException('Could not start Google Secret Manager, make sure GOOGLE_APPLICATION_CREDENTIALS environment variables points to valid JSON credentials.', 0, $exception);
+            throw new RuntimeException(self::CLIENT_START_FAILED, 0, $exception);
         }
-        $new = new self($client, $secretPath);
 
-        return $new;
+        return new self($client, $secretPath);
     }
 
     public function getTtl(): ?int
     {
-        throw new RuntimeException('Google Secret Manager does not support TTL.');
+        throw new RuntimeException(self::TTL_NOT_SUPPORTED);
     }
 
     public function getValue(): ?string
@@ -50,7 +49,7 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
             $secretVersionName = $this->secretPath.self::VERSION_LATEST;
             $response = $this->client->accessSecretVersion($secretVersionName);
         } catch (ApiException) {
-            $message = sprintf('Failed to retrieve the "%s" secret value.', basename($this->secretPath));
+            $message = sprintf(self::GET_VALUE_FAILED_SPRINTF, basename($this->secretPath));
 
             throw new GoogleSecretKeyValueStoreException($message);
         }
@@ -65,14 +64,14 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
     public function setValue(?string $value, ?int $ttl = null): self
     {
         if (null !== $ttl) {
-            throw new RuntimeException('Google Secret Manager does not support TTL.');
+            throw new RuntimeException(self::TTL_NOT_SUPPORTED);
         }
 
         try {
             $payload = new SecretPayload(['data' => $value]);
             $this->client->addSecretVersion($this->secretPath, $payload);
         } catch (ApiException) {
-            $message = sprintf('Failed to update the "%s" secret value.', basename($this->secretPath));
+            $message = sprintf(self::SET_VALUE_FAILED_SPRINTF, basename($this->secretPath));
 
             throw new GoogleSecretKeyValueStoreException($message);
         }

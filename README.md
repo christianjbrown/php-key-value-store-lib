@@ -1,17 +1,34 @@
+# Key-Value Store
 
-# Overview
+[![CI](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml)
 
-This is a library of key value store implementations. The goal is to provide a simple interface for storing, retrieving and updating simple key-value pair data, such as configuration or refresh tokens. The library will provide a few different implementations of the key value store, each with different performance characteristics.
+A small, strongly-typed PHP 8.5+ library of interchangeable **key-value stores**. Every store hides
+behind one tiny contract — `KeyValueStoreInterface` — so you can read, write, and update a single
+`?string` value (with an optional `?int` TTL) without caring where it actually lives. It's built for
+small pieces of state such as configuration flags, cursors, or OAuth refresh tokens.
+
+Three implementations ship today:
+
+- **Database** (`DatabaseKeyValueStore`) — persists to MySQL via Doctrine ORM, keyed by a string id.
+- **Google Secret Manager** (`GoogleSecretKeyValueStore`) — reads/writes a Secret Manager secret.
+- **In-memory** (`MemoryKeyValueStore`) — a per-process value, handy for tests and defaults.
+
+Because they share one interface, calling code can accept a `KeyValueStoreInterface` and stay
+oblivious to the backing store.
+
+
 
 ## :heavy_check_mark: Prerequisites
 
 - [Git](https://git-scm.com/)
-- [PHP](https://www.php.net/) 8.3 or higher (8.x)
+- [PHP](https://www.php.net/) 8.5 or higher (8.x)
 - [Composer](https://getcomposer.org/)
 
 :bulb: If you're on MacOS and have [Homebrew](https://brew.sh/), PHP and Composer will install with `brew install composer`.
 
-# :building_construction: Installation
+
+
+## :building_construction: Installation
 
 For your composer-enabled project:
 
@@ -19,16 +36,124 @@ For your composer-enabled project:
 composer require christianjbrown/php-key-value-store-lib
 ```
 
-# :computer: Usage
 
-## Database key-value store
 
-`@todo`
+## :computer: Usage
 
-## Google Secret Manager key-value store
+Every store exposes the same three methods:
 
-`@todo`
+```php
+public function getTtl(): ?int;
+public function getValue(): ?string;
+public function setValue(?string $value, ?int $ttl = null): self;
+```
 
-## In-memory key-value store
 
-`@todo`
+
+### :floppy_disk: Database key-value store
+
+Persists each key to a row in a MySQL table through Doctrine ORM. First, define a concrete entity by
+extending the provided mapped superclass and giving it a table:
+
+```php
+use ChristianBrown\KeyValueStore\AbstractDatabaseKeyValueStoreEntity;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'key_value_store')]
+class KeyValueStoreEntity extends AbstractDatabaseKeyValueStoreEntity
+{
+}
+```
+
+Then construct a store with your Doctrine `EntityManager`, the entity class name, and the key:
+
+```php
+use ChristianBrown\KeyValueStore\DatabaseKeyValueStore;
+
+$store = new DatabaseKeyValueStore($entityManager, KeyValueStoreEntity::class, 'refresh-token');
+
+$store->setValue('a-secret-token', 3600); // value + optional TTL (seconds)
+
+$value = $store->getValue(); // 'a-secret-token', or null if the key has never been set
+$ttl   = $store->getTtl();   // 3600, or null
+```
+
+Passing an entity class that does not extend `AbstractDatabaseKeyValueStoreEntity` (i.e. does not
+implement `DatabaseKeyValueStoreEntityInterface`) throws `InvalidArgumentException`.
+
+
+
+### :lock: Google Secret Manager key-value store
+
+Reads and writes a [Google Secret Manager](https://cloud.google.com/secret-manager) secret. The
+quickest way to build one is the static `create()` factory, which constructs a real client from the
+`GOOGLE_APPLICATION_CREDENTIALS` environment variable:
+
+```php
+use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStore;
+use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface;
+
+$store = GoogleSecretKeyValueStore::create('projects/my-project/secrets/my-secret');
+
+try {
+    $value = $store->getValue();      // the latest secret version's value, or null
+    $store->setValue('new-value');    // adds a new secret version
+} catch (GoogleSecretKeyValueStoreExceptionInterface $e) {
+    // the secret could not be read or written
+    print $e->getMessage();
+}
+```
+
+You can also inject a pre-built `Google\Cloud\SecretManager\V1\SecretManagerServiceClient` directly
+via the constructor (useful for tests):
+
+```php
+$store = new GoogleSecretKeyValueStore($client, 'projects/my-project/secrets/my-secret');
+```
+
+:warning: Secret Manager has no notion of a TTL, so `getTtl()` — and any `setValue()` call that
+supplies a non-null `$ttl` — throws a `RuntimeException`.
+
+
+
+### :zap: In-memory key-value store
+
+A per-process value that lives only for the current request. No configuration required:
+
+```php
+use ChristianBrown\KeyValueStore\MemoryKeyValueStore;
+
+$store = new MemoryKeyValueStore();
+$store->setValue('hello', 60);
+
+$store->getValue(); // 'hello'
+$store->getTtl();   // 60
+```
+
+
+
+## :rotating_light: Error handling
+
+`GoogleSecretKeyValueStore` normalizes Secret Manager access failures into a single library exception
+that implements `ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface` (which
+extends `Throwable`), so one `catch` covers both read and write failures:
+
+```php
+use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface;
+
+try {
+    $value = $store->getValue();
+} catch (GoogleSecretKeyValueStoreExceptionInterface $e) {
+    print $e->getMessage();
+}
+```
+
+The database store throws `InvalidArgumentException` if constructed with an entity class that does not
+implement `DatabaseKeyValueStoreEntityInterface`.
+
+
+
+## :page_facing_up: License
+
+Released under the [MIT License](LICENSE).

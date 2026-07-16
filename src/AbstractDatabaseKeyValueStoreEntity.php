@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @noinspection MethodShouldBeFinalInspection
- */
-
 declare(strict_types=1);
 
 namespace ChristianBrown\KeyValueStore;
@@ -24,29 +20,29 @@ abstract class AbstractDatabaseKeyValueStoreEntity implements DatabaseKeyValueSt
     #[ORM\Column(type: Types::STRING, nullable: true)]
     private ?string $value = null;
 
-    public function getId(): ?string
+    final public function getId(): ?string
     {
         return $this->id;
     }
 
-    public function getTtl(): ?int
+    final public function getTtl(): ?int
     {
         return $this->ttl;
     }
 
-    public function getValue(): ?string
+    final public function getValue(): ?string
     {
         return $this->value;
     }
 
-    public function setId(?string $id): DatabaseKeyValueStoreEntityInterface
+    final public function setId(?string $id): DatabaseKeyValueStoreEntityInterface
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function setValue(?string $value, ?int $ttl = null): DatabaseKeyValueStoreEntityInterface
+    final public function setValue(?string $value, ?int $ttl = null): DatabaseKeyValueStoreEntityInterface
     {
         $this->value = $value;
         $this->ttl = $ttl;
