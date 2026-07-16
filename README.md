@@ -9,7 +9,8 @@ small pieces of state such as configuration flags, cursors, or OAuth refresh tok
 
 Four implementations ship today:
 
-- **Database** (`DatabaseKeyValueStore`) — persists to MySQL via Doctrine ORM, keyed by a string id.
+- **Database** (`DatabaseKeyValueStore`) — persists via Doctrine ORM to any database it supports
+  (MySQL/MariaDB, PostgreSQL, SQLite, SQL Server, …), keyed by a string id.
 - **Google Secret Manager** (`GoogleSecretKeyValueStore`) — reads/writes a Secret Manager secret.
 - **Google Firestore** (`FirestoreKeyValueStore`) — reads/writes a single Firestore document; serverless
   and connectionless, with TTL support via an `expiresAt` field.
@@ -54,8 +55,9 @@ public function setValue(?string $value, ?int $ttl = null): self;
 
 ### :floppy_disk: Database key-value store
 
-Persists each key to a row in a MySQL table through Doctrine ORM. First, define a concrete entity by
-extending the provided mapped superclass and giving it a table:
+Persists each key to a row in a database table through Doctrine ORM — so it works with any platform
+Doctrine DBAL supports (MySQL/MariaDB, PostgreSQL, SQLite, SQL Server, …). First, define a concrete
+entity by extending the provided mapped superclass and giving it a table:
 
 ```php
 use ChristianBrown\KeyValueStore\AbstractDatabaseKeyValueStoreEntity;
