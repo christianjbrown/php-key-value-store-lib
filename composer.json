@@ -1,30 +1,49 @@
 {
     "name": "christianjbrown/php-key-value-store-lib",
+    "description": "A thin, strongly-typed PHP 8.5+ library of interchangeable key-value store implementations (database, Google Secret Manager, in-memory) behind a single mockable interface.",
     "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "key-value",
+        "store",
+        "doctrine",
+        "google-secret-manager",
+        "configuration"
+    ],
+    "authors": [
+        {
+            "name": "Christian Brown"
+        }
+    ],
     "require": {
-        "php": "^8.3",
+        "php": "^8.5",
         "ext-pdo_mysql": "*",
         "doctrine/dbal": "^4.0.2",
         "doctrine/orm": "^3.1.3",
         "google/cloud-secret-manager": "^1.12",
-        "symfony/cache": "^6.3"
+        "symfony/cache": "^6.4 || ^7.0"
     },
     "require-dev": {
         "christianjbrown/php-code-quality-scripts": "dev-main",
+        "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
-            "ChristianBrown\\KeyValueStore\\": "src/",
+            "ChristianBrown\\KeyValueStore\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
             "ChristianBrown\\KeyValueStore\\Tests\\": "tests/"
         }
     },
-    "config": {
-        "bin-dir": "bin"
-    },
     "scripts": {
         "test": [
-            "clear && XDEBUG_MODE=coverage ./bin/phpunit -d memory_limit=512M && open ./.phpunit.cache/code-coverage-html/index.html"
+            "clear && XDEBUG_MODE=coverage php -d memory_limit=-1 ./bin/phpunit && open ./.phpunit.cache/code-coverage-html/index.html"
+        ],
+        "stan": [
+            "clear && ./bin/phpstan analyse"
         ],
         "check-style": [
             "clear && ./bin/php-cs ./src ./tests"
@@ -39,10 +58,14 @@
             "clear && ./bin/php-cs-fix-diff"
         ]
     },
+    "config": {
+        "bin-dir": "bin"
+    },
     "repositories": [
         {
             "type": "github",
             "url": "git@github.com:christianjbrown/php-code-quality-scripts.git"
         }
-    ]
+    ],
+    "minimum-stability": "dev"
 }

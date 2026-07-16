@@ -6,6 +6,7 @@ namespace ChristianBrown\KeyValueStore\Tests;
 
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStore;
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface;
+use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreInterface;
 use Exception;
 use Google\ApiCore\ApiException;
 use Google\Cloud\SecretManager\V1\AccessSecretVersionResponse;
@@ -17,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 use function putenv;
+use function sprintf;
 
 #[CoversClass(GoogleSecretKeyValueStore::class)]
 final class GoogleSecretKeyValueStoreTest extends TestCase
@@ -24,14 +26,16 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
     public function testCreate(): void
     {
         putenv('GOOGLE_APPLICATION_CREDENTIALS=./tests/test-credentials.json');
+
         $store = GoogleSecretKeyValueStore::create('test/secret/path/here');
+
         self::assertInstanceOf(GoogleSecretKeyValueStore::class, $store);
     }
 
     public function testCreateException(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Could not start Google Secret Manager, make sure GOOGLE_APPLICATION_CREDENTIALS environment variables points to valid JSON credentials.');
+        $this->expectExceptionMessage(GoogleSecretKeyValueStoreInterface::CLIENT_START_FAILED);
 
         putenv('GOOGLE_APPLICATION_CREDENTIALS=./tests/file-does-not-exist.json');
         GoogleSecretKeyValueStore::create('test/secret/path/here');
@@ -43,9 +47,9 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
     public function testGetTtl(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Google Secret Manager does not support TTL.');
+        $this->expectExceptionMessage(GoogleSecretKeyValueStoreInterface::TTL_NOT_SUPPORTED);
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerServiceClient::class);
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
 
         $store->getTtl();
@@ -56,17 +60,16 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testGetValue(): void
     {
-        $secretPayload = $this->createMock(SecretPayload::class);
+        $secretPayload = self::createStub(SecretPayload::class);
         $secretPayload->method('getData')
             ->willReturn('test-secret-value');
 
-        $secretVersion = $this->createMock(AccessSecretVersionResponse::class);
+        $secretVersion = self::createStub(AccessSecretVersionResponse::class);
         $secretVersion->method('getPayload')
             ->willReturn($secretPayload);
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerServiceClient::class);
         $client->method('accessSecretVersion')
-            ->with('test/secret/path/here/versions/latest')
             ->willReturn($secretVersion);
 
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
@@ -80,11 +83,10 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
     public function testGetValueApiException(): void
     {
         $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
-        $this->expectExceptionMessage('Failed to retrieve the "here" secret value.');
+        $this->expectExceptionMessage(sprintf(GoogleSecretKeyValueStoreInterface::GET_VALUE_FAILED_SPRINTF, 'here'));
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerServiceClient::class);
         $client->method('accessSecretVersion')
-            ->with('test/secret/path/here/versions/latest')
             ->willThrowException(new ApiException('test-exception-message', 42));
 
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
@@ -97,13 +99,12 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testGetValueNoPayload(): void
     {
-        $secretVersion = $this->createMock(AccessSecretVersionResponse::class);
+        $secretVersion = self::createStub(AccessSecretVersionResponse::class);
         $secretVersion->method('getPayload')
             ->willReturn(null);
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerServiceClient::class);
         $client->method('accessSecretVersion')
-            ->with('test/secret/path/here/versions/latest')
             ->willReturn($secretVersion);
 
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
@@ -116,15 +117,15 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testSetValue(): void
     {
-        $secretVersion = $this->createMock(AccessSecretVersionResponse::class);
+        $secretVersion = self::createStub(AccessSecretVersionResponse::class);
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createMock(SecretManagerServiceClient::class);
         $client->expects(self::once())
             ->method('addSecretVersion')
             ->with(
                 'test/secret/path/here',
                 self::callback(
-                    static fn (SecretPayload $payload) => 'test-secret-value' === $payload->getData()
+                    static fn (SecretPayload $payload): bool => 'test-secret-value' === $payload->getData(),
                 ),
             )
             ->willReturn($secretVersion);
@@ -140,15 +141,15 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
     public function testSetValueApiException(): void
     {
         $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
-        $this->expectExceptionMessage('Failed to update the "here" secret value.');
+        $this->expectExceptionMessage(sprintf(GoogleSecretKeyValueStoreInterface::SET_VALUE_FAILED_SPRINTF, 'here'));
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createMock(SecretManagerServiceClient::class);
         $client->expects(self::once())
             ->method('addSecretVersion')
             ->with(
                 'test/secret/path/here',
                 self::callback(
-                    static fn (SecretPayload $payload) => 'test-secret-value' === $payload->getData()
+                    static fn (SecretPayload $payload): bool => 'test-secret-value' === $payload->getData(),
                 ),
             )
             ->willThrowException(new ApiException('test-exception-message', 42));
@@ -164,9 +165,9 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
     public function testSetValueTtl(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Google Secret Manager does not support TTL.');
+        $this->expectExceptionMessage(GoogleSecretKeyValueStoreInterface::TTL_NOT_SUPPORTED);
 
-        $client = $this->createMock(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerServiceClient::class);
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
 
         $store->setValue('test-secret-value', 2);

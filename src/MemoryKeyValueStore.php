@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ChristianBrown\KeyValueStore;
 
-final class MemoryKeyValueStore implements KeyValueStoreInterface
+final class MemoryKeyValueStore implements MemoryKeyValueStoreInterface
 {
     private ?int $ttl = null;
     private ?string $value = null;
