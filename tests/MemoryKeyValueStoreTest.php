@@ -11,11 +11,18 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MemoryKeyValueStore::class)]
 final class MemoryKeyValueStoreTest extends TestCase
 {
-    public function test(): void
+    public function testDefaultsAreNull(): void
     {
         $store = new MemoryKeyValueStore();
+
         self::assertNull($store->getTtl());
         self::assertNull($store->getValue());
+    }
+
+    public function testSetValueIsFluentAndPersistsState(): void
+    {
+        $store = new MemoryKeyValueStore();
+
         self::assertSame($store, $store->setValue('test-value', 2));
         self::assertSame(2, $store->getTtl());
         self::assertSame('test-value', $store->getValue());

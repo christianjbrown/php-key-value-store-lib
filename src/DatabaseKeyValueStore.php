@@ -9,18 +9,26 @@ use Doctrine\ORM\EntityRepository;
 use InvalidArgumentException;
 
 use function is_a;
+use function sprintf;
 
-final class DatabaseKeyValueStore implements KeyValueStoreInterface
+final class DatabaseKeyValueStore implements DatabaseKeyValueStoreInterface
 {
+    /**
+     * @var class-string<DatabaseKeyValueStoreEntityInterface>
+     */
     private string $entityClassName;
     private EntityManagerInterface $entityManager;
     private string $key;
+
+    /**
+     * @var EntityRepository<DatabaseKeyValueStoreEntityInterface>
+     */
     private EntityRepository $repository;
 
     public function __construct(EntityManagerInterface $entityManager, string $entityClassName, string $key)
     {
         if (!is_a($entityClassName, DatabaseKeyValueStoreEntityInterface::class, true)) {
-            throw new InvalidArgumentException(sprintf('Entity class %s must implement %s', $entityClassName, DatabaseKeyValueStoreEntityInterface::class));
+            throw new InvalidArgumentException(sprintf(self::ENTITY_CLASS_INVALID_SPRINTF, $entityClassName, DatabaseKeyValueStoreEntityInterface::class));
         }
 
         $this->entityManager = $entityManager;
@@ -33,7 +41,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
     {
         $ttl = null;
 
-        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
+        $keyValueStoreObj = $this->repository->findOneBy([self::FIELD_ID => $this->key]);
         if ($keyValueStoreObj instanceof DatabaseKeyValueStoreEntityInterface) {
             $ttl = $keyValueStoreObj->getTtl();
         }
@@ -45,7 +53,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
     {
         $value = null;
 
-        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
+        $keyValueStoreObj = $this->repository->findOneBy([self::FIELD_ID => $this->key]);
         if ($keyValueStoreObj instanceof DatabaseKeyValueStoreEntityInterface) {
             $value = $keyValueStoreObj->getValue();
         }
@@ -55,7 +63,7 @@ final class DatabaseKeyValueStore implements KeyValueStoreInterface
 
     public function setValue(?string $value, ?int $ttl = null): self
     {
-        $keyValueStoreObj = $this->repository->findOneBy(['id' => $this->key]);
+        $keyValueStoreObj = $this->repository->findOneBy([self::FIELD_ID => $this->key]);
         if (!($keyValueStoreObj instanceof DatabaseKeyValueStoreEntityInterface)) {
             $keyValueStoreObj = new $this->entityClassName();
             $keyValueStoreObj->setId($this->key);
