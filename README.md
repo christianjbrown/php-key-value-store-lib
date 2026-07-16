@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml)
 
-A small, strongly-typed PHP 8.5+ library of interchangeable **key-value stores**. Every store hides
+A small, strongly-typed PHP library of interchangeable **key-value stores**. Every store hides
 behind one tiny contract — `KeyValueStoreInterface` — so you can read, write, and update a single
 `?string` value (with an optional `?int` TTL) without caring where it actually lives. It's built for
 small pieces of state such as configuration flags, cursors, or OAuth refresh tokens.
