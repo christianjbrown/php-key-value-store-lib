@@ -15,7 +15,6 @@ use Google\Cloud\SecretManager\V1\SecretPayload;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Exception as MockObjectException;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 use function putenv;
 use function sprintf;
@@ -39,20 +38,6 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
 
         putenv('GOOGLE_APPLICATION_CREDENTIALS=./tests/file-does-not-exist.json');
         GoogleSecretKeyValueStore::create('test/secret/path/here');
-    }
-
-    /**
-     * @throws MockObjectException
-     */
-    public function testGetTtl(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage(GoogleSecretKeyValueStoreInterface::TTL_NOT_SUPPORTED);
-
-        $client = self::createStub(SecretManagerServiceClient::class);
-        $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
-
-        $store->getTtl();
     }
 
     /**
@@ -157,19 +142,5 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
         $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
 
         $store->setValue('test-secret-value');
-    }
-
-    /**
-     * @throws MockObjectException
-     */
-    public function testSetValueTtl(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage(GoogleSecretKeyValueStoreInterface::TTL_NOT_SUPPORTED);
-
-        $client = self::createStub(SecretManagerServiceClient::class);
-        $store = new GoogleSecretKeyValueStore($client, 'test/secret/path/here');
-
-        $store->setValue('test-secret-value', 2);
     }
 }

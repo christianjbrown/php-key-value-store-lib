@@ -36,11 +36,6 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
         return new self($client, $secretPath);
     }
 
-    public function getTtl(): ?int
-    {
-        throw new RuntimeException(self::TTL_NOT_SUPPORTED);
-    }
-
     public function getValue(): ?string
     {
         $value = null;
@@ -61,12 +56,8 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
         return $value;
     }
 
-    public function setValue(?string $value, ?int $ttl = null): self
+    public function setValue(?string $value): self
     {
-        if (null !== $ttl) {
-            throw new RuntimeException(self::TTL_NOT_SUPPORTED);
-        }
-
         try {
             $payload = new SecretPayload(['data' => $value]);
             $this->client->addSecretVersion($this->secretPath, $payload);
