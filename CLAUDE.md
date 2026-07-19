@@ -50,8 +50,15 @@ push/PR to `main`, supplying private-repo credentials via the `COMPOSER_AUTH` se
 Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/`), mirrored under
 `ChristianBrown\KeyValueStore\Tests\` (`tests/`).
 
-- **`KeyValueStoreInterface`** — the shared contract every store implements: `getTtl(): ?int`,
-  `getValue(): ?string`, `setValue(?string $value, ?int $ttl = null): self`.
+- **`KeyValueStoreInterface`** — the minimal shared contract every store implements:
+  `getValue(): ?string` and `setValue(?string $value): self`. It carries **no TTL** — a store that
+  cannot express a TTL (Google Secret Manager) implements only this, so it never has to throw on an
+  unsupported operation (LSP).
+- **`TtlAwareKeyValueStoreInterface extends KeyValueStoreInterface`** — the contract for stores that
+  *do* support expiry: it adds `getTtl(): ?int` and widens `setValue(?string $value, ?int $ttl = null):
+  self` (an optional parameter, so it remains substitutable for the base). `DatabaseKeyValueStore`,
+  `FirestoreKeyValueStore` and `MemoryKeyValueStore` implement this; callers that need a TTL (e.g. the
+  OAuth access-token cache) type-hint this interface rather than the base.
 - **`DatabaseKeyValueStore` / `DatabaseKeyValueStoreInterface`** — constructed with an
   `EntityManagerInterface`, a `class-string` naming the Doctrine entity, and the row's string key. It
   resolves the entity's `EntityRepository` up front and does `findOneBy([FIELD_ID => $key])` on each
@@ -65,8 +72,9 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
   `SecretManagerServiceClient`. The client is **constructor-injected** so it is fully mockable; the
   static `create()` factory is the production convenience that builds a real client from
   `GOOGLE_APPLICATION_CREDENTIALS`. `getValue()` reads the `/versions/latest` version; `setValue()`
-  adds a new secret version. TTL is unsupported, so `getTtl()` and a TTL-bearing `setValue()` throw.
-  Secret-access failures are normalized into `GoogleSecretKeyValueStoreException`.
+  adds a new secret version. Secret Manager has no TTL, so this store implements only the base
+  `KeyValueStoreInterface` (no `getTtl()`, no TTL-bearing `setValue()`) rather than throwing on an
+  unsupported operation. Secret-access failures are normalized into `GoogleSecretKeyValueStoreException`.
 - **`GoogleSecretKeyValueStoreException` / `GoogleSecretKeyValueStoreExceptionInterface`** — the one
   library-specific exception (a `RuntimeException`), so callers can `catch` the interface.
 - **`FirestoreKeyValueStore` / `FirestoreKeyValueStoreInterface`** — wraps Google's `FirestoreClient`.
@@ -96,7 +104,7 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
 - **Constants live on the interface, not the class**: the Doctrine lookup field
   (`DatabaseKeyValueStoreInterface::FIELD_ID`), the secret version suffix
   (`GoogleSecretKeyValueStoreInterface::VERSION_LATEST`), and **every** exception message template
-  (`*_SPRINTF`, `*_FAILED`, `TTL_NOT_SUPPORTED`, …). Message text never appears as a literal in a class
+  (`*_SPRINTF`, `*_FAILED`, …). Message text never appears as a literal in a class
   body — reference the interface constant (via `self::` from the implementing class).
 - **No constructor property promotion** — declare typed `private` properties and assign them in the
   constructor body. Class members (properties then methods) are ordered **alphabetically**.

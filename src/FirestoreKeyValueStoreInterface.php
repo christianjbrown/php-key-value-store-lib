@@ -6,7 +6,7 @@ namespace ChristianBrown\KeyValueStore;
 
 use Google\Cloud\Firestore\FirestoreClient;
 
-interface FirestoreKeyValueStoreInterface extends KeyValueStoreInterface
+interface FirestoreKeyValueStoreInterface extends TtlAwareKeyValueStoreInterface
 {
     public const string FIELD_EXPIRES_AT = 'expiresAt';
     public const string FIELD_VALUE = 'value';
