@@ -125,22 +125,6 @@ final class FirestoreKeyValueStoreTest extends TestCase
     /**
      * @throws MockObjectException
      */
-    public function testGetValueNotStored(): void
-    {
-        $snapshot = self::createStub(DocumentSnapshot::class);
-        $snapshot->method('exists')
-            ->willReturn(true);
-        $snapshot->method('get')
-            ->willReturn(null);
-
-        $store = new FirestoreKeyValueStore($this->documentReferenceReturning($snapshot));
-
-        self::assertNull($store->getValue());
-    }
-
-    /**
-     * @throws MockObjectException
-     */
     public function testGetValueNotExpiredNotStored(): void
     {
         $snapshot = self::createStub(DocumentSnapshot::class);
@@ -151,6 +135,22 @@ final class FirestoreKeyValueStoreTest extends TestCase
                 [FirestoreKeyValueStoreInterface::FIELD_EXPIRES_AT, time() + 60],
                 [FirestoreKeyValueStoreInterface::FIELD_VALUE, null],
             ]);
+
+        $store = new FirestoreKeyValueStore($this->documentReferenceReturning($snapshot));
+
+        self::assertNull($store->getValue());
+    }
+
+    /**
+     * @throws MockObjectException
+     */
+    public function testGetValueNotStored(): void
+    {
+        $snapshot = self::createStub(DocumentSnapshot::class);
+        $snapshot->method('exists')
+            ->willReturn(true);
+        $snapshot->method('get')
+            ->willReturn(null);
 
         $store = new FirestoreKeyValueStore($this->documentReferenceReturning($snapshot));
 
