@@ -25,8 +25,10 @@ Four stores ship today:
 
 Binaries install into `bin/` (Composer `bin-dir`), not `vendor/bin/`. Both `bin/` and `vendor/` are
 gitignored and Composer-installed, so run `composer install` first. The style tooling comes from the
-private `christianjbrown/php-code-quality-scripts` dev dependency (php-cs-fixer + PHP_CodeSniffer,
-**Symfony2 coding standard**); installing it needs SSH/`COMPOSER_AUTH` access to the private repo.
+private `christianjbrown/php-code-quality-scripts` dev dependency: `check-style` lints with
+**PHP_CodeSniffer 4** using the `ChristianBrown` standard (slevomat sniffs plus PSR/PEAR/Squiz/Generic),
+while **php-cs-fixer** (`@PhpCsFixer`/`@Symfony`) handles formatting; installing it needs
+SSH/`COMPOSER_AUTH` access to the private repo.
 
 | Task | Command |
 | --- | --- |
