@@ -6,7 +6,9 @@ namespace ChristianBrown\KeyValueStore;
 
 use Exception;
 use Google\ApiCore\ApiException;
-use Google\Cloud\SecretManager\V1\SecretManagerServiceClient;
+use Google\Cloud\SecretManager\V1\AccessSecretVersionRequest;
+use Google\Cloud\SecretManager\V1\AddSecretVersionRequest;
+use Google\Cloud\SecretManager\V1\Client\SecretManagerServiceClient;
 use Google\Cloud\SecretManager\V1\SecretPayload;
 use RuntimeException;
 
@@ -16,10 +18,10 @@ use function sprintf;
 
 final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterface
 {
-    private SecretManagerServiceClient $client;
+    private SecretManagerClientInterface $client;
     private string $secretPath;
 
-    public function __construct(SecretManagerServiceClient $client, string $secretPath)
+    public function __construct(SecretManagerClientInterface $client, string $secretPath)
     {
         $this->client = $client;
         $this->secretPath = mb_trim($secretPath, '/');
@@ -28,7 +30,7 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
     public static function create(string $secretPath): GoogleSecretKeyValueStoreInterface
     {
         try {
-            $client = new SecretManagerServiceClient();
+            $client = new GoogleSecretManagerClientAdapter(new SecretManagerServiceClient());
         } catch (Exception $exception) {
             throw new RuntimeException(self::CLIENT_START_FAILED, 0, $exception);
         }
@@ -42,7 +44,8 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
 
         try {
             $secretVersionName = $this->secretPath.self::VERSION_LATEST;
-            $response = $this->client->accessSecretVersion($secretVersionName);
+            $request = (new AccessSecretVersionRequest())->setName($secretVersionName);
+            $response = $this->client->accessSecretVersion($request);
         } catch (ApiException) {
             $message = sprintf(self::GET_VALUE_FAILED_SPRINTF, basename($this->secretPath));
 
@@ -60,7 +63,10 @@ final class GoogleSecretKeyValueStore implements GoogleSecretKeyValueStoreInterf
     {
         try {
             $payload = new SecretPayload(['data' => $value]);
-            $this->client->addSecretVersion($this->secretPath, $payload);
+            $request = (new AddSecretVersionRequest())
+                ->setParent($this->secretPath)
+                ->setPayload($payload);
+            $this->client->addSecretVersion($request);
         } catch (ApiException) {
             $message = sprintf(self::SET_VALUE_FAILED_SPRINTF, basename($this->secretPath));
 
