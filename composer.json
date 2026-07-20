@@ -27,7 +27,7 @@
     "require-dev": {
         "christianjbrown/php-code-quality-scripts": "dev-main",
         "phpstan/phpstan": "^2.0",
-        "phpunit/phpunit": "^12.0",
+        "phpunit/phpunit": "^13.0",
         "google/cloud-firestore": "^1.55 || ^2.0"
     },
     "autoload": {
