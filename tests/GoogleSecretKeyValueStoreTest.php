@@ -7,12 +7,16 @@ namespace ChristianBrown\KeyValueStore\Tests;
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStore;
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreExceptionInterface;
 use ChristianBrown\KeyValueStore\GoogleSecretKeyValueStoreInterface;
+use ChristianBrown\KeyValueStore\GoogleSecretManagerClientAdapter;
+use ChristianBrown\KeyValueStore\SecretManagerClientInterface;
 use Exception;
 use Google\ApiCore\ApiException;
 use Google\Cloud\SecretManager\V1\AccessSecretVersionResponse;
-use Google\Cloud\SecretManager\V1\SecretManagerServiceClient;
+use Google\Cloud\SecretManager\V1\AddSecretVersionRequest;
 use Google\Cloud\SecretManager\V1\SecretPayload;
+use Google\Cloud\SecretManager\V1\SecretVersion;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\Exception as MockObjectException;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +24,7 @@ use function putenv;
 use function sprintf;
 
 #[CoversClass(GoogleSecretKeyValueStore::class)]
+#[UsesClass(GoogleSecretManagerClientAdapter::class)]
 final class GoogleSecretKeyValueStoreTest extends TestCase
 {
     public function testCreate(): void
@@ -53,7 +58,7 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
         $secretVersion->method('getPayload')
             ->willReturn($secretPayload);
 
-        $client = self::createStub(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerClientInterface::class);
         $client->method('accessSecretVersion')
             ->willReturn($secretVersion);
 
@@ -70,7 +75,7 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
         $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
         $this->expectExceptionMessage(sprintf(GoogleSecretKeyValueStoreInterface::GET_VALUE_FAILED_SPRINTF, 'here'));
 
-        $client = self::createStub(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerClientInterface::class);
         $client->method('accessSecretVersion')
             ->willThrowException(new ApiException('test-exception-message', 42));
 
@@ -88,7 +93,7 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
         $secretVersion->method('getPayload')
             ->willReturn(null);
 
-        $client = self::createStub(SecretManagerServiceClient::class);
+        $client = self::createStub(SecretManagerClientInterface::class);
         $client->method('accessSecretVersion')
             ->willReturn($secretVersion);
 
@@ -102,15 +107,15 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
      */
     public function testSetValue(): void
     {
-        $secretVersion = self::createStub(AccessSecretVersionResponse::class);
+        $secretVersion = self::createStub(SecretVersion::class);
 
-        $client = self::createMock(SecretManagerServiceClient::class);
+        $client = self::createMock(SecretManagerClientInterface::class);
         $client->expects(self::once())
             ->method('addSecretVersion')
             ->with(
-                'test/secret/path/here',
                 self::callback(
-                    static fn (SecretPayload $payload): bool => 'test-secret-value' === $payload->getData(),
+                    static fn (AddSecretVersionRequest $request): bool => 'test/secret/path/here' === $request->getParent()
+                        && 'test-secret-value' === $request->getPayload()?->getData(),
                 ),
             )
             ->willReturn($secretVersion);
@@ -128,13 +133,13 @@ final class GoogleSecretKeyValueStoreTest extends TestCase
         $this->expectException(GoogleSecretKeyValueStoreExceptionInterface::class);
         $this->expectExceptionMessage(sprintf(GoogleSecretKeyValueStoreInterface::SET_VALUE_FAILED_SPRINTF, 'here'));
 
-        $client = self::createMock(SecretManagerServiceClient::class);
+        $client = self::createMock(SecretManagerClientInterface::class);
         $client->expects(self::once())
             ->method('addSecretVersion')
             ->with(
-                'test/secret/path/here',
                 self::callback(
-                    static fn (SecretPayload $payload): bool => 'test-secret-value' === $payload->getData(),
+                    static fn (AddSecretVersionRequest $request): bool => 'test/secret/path/here' === $request->getParent()
+                        && 'test-secret-value' === $request->getPayload()?->getData(),
                 ),
             )
             ->willThrowException(new ApiException('test-exception-message', 42));

@@ -70,13 +70,24 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
 - **`AbstractDatabaseKeyValueStoreEntity` / `DatabaseKeyValueStoreEntityInterface`** — the Doctrine
   `#[ORM\MappedSuperclass]` that stores extend to get the `id` / `ttl` / `value` columns and their
   accessors for free. See the deliberate deviation below.
-- **`GoogleSecretKeyValueStore` / `GoogleSecretKeyValueStoreInterface`** — wraps Google's
-  `SecretManagerServiceClient`. The client is **constructor-injected** so it is fully mockable; the
-  static `create()` factory is the production convenience that builds a real client from
-  `GOOGLE_APPLICATION_CREDENTIALS`. `getValue()` reads the `/versions/latest` version; `setValue()`
-  adds a new secret version. Secret Manager has no TTL, so this store implements only the base
-  `KeyValueStoreInterface` (no `getTtl()`, no TTL-bearing `setValue()`) rather than throwing on an
-  unsupported operation. Secret-access failures are normalized into `GoogleSecretKeyValueStoreException`.
+- **`GoogleSecretKeyValueStore` / `GoogleSecretKeyValueStoreInterface`** — talks to Google Secret
+  Manager through the library-owned **`SecretManagerClientInterface`** port (two methods,
+  `accessSecretVersion(AccessSecretVersionRequest)` and `addSecretVersion(AddSecretVersionRequest)`,
+  mirroring the v2 SDK). That interface is **constructor-injected** so it is fully mockable — the
+  `google/cloud-secret-manager` v2 client (`V1\Client\SecretManagerServiceClient`) is `final` and
+  cannot be doubled, so the store never depends on it directly. **`GoogleSecretManagerClientAdapter`**
+  (`final`, implements `SecretManagerClientInterface`) is the single production implementation: it
+  wraps the real final v2 client and delegates each call one-to-one. The static `create()` factory is
+  the production convenience that builds the real v2 client from `GOOGLE_APPLICATION_CREDENTIALS`,
+  wraps it in the adapter, and injects that. `getValue()` reads the `/versions/latest` version;
+  `setValue()` adds a new secret version — both build the v2 request objects
+  (`AccessSecretVersionRequest`/`AddSecretVersionRequest`) and call the port. Secret Manager has no
+  TTL, so this store implements only the base `KeyValueStoreInterface` (no `getTtl()`, no TTL-bearing
+  `setValue()`) rather than throwing on an unsupported operation. Secret-access failures are normalized
+  into `GoogleSecretKeyValueStoreException`. The adapter's two pass-throughs are covered by building a
+  real v2 client over `google/gax`'s `Google\ApiCore\Testing\MockTransport` (plus a stubbed
+  `CredentialsWrapper`) that returns a canned response — the one place the real final SDK client is
+  exercised, alongside `create()`.
 - **`GoogleSecretKeyValueStoreException` / `GoogleSecretKeyValueStoreExceptionInterface`** — the one
   library-specific exception (a `RuntimeException`), so callers can `catch` the interface.
 - **`FirestoreKeyValueStore` / `FirestoreKeyValueStoreInterface`** — wraps Google's `FirestoreClient`.
