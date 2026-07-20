@@ -69,7 +69,6 @@
             "url": "git@github.com:christianjbrown/php-code-quality-scripts.git"
         }
     ],
-    "minimum-stability": "dev",
     "suggest": {
         "google/cloud-firestore": "Required only for FirestoreKeyValueStore (pulls in ext-grpc)."
     }
