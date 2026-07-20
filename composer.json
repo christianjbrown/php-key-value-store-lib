@@ -21,8 +21,7 @@
         "ext-pdo_mysql": "*",
         "doctrine/dbal": "^4.4.3",
         "doctrine/orm": "^3.6.7",
-        "google/cloud-secret-manager": "^2.0",
-        "symfony/cache": "^6.4 || ^7.0"
+        "google/cloud-secret-manager": "^2.0"
     },
     "require-dev": {
         "christianjbrown/php-code-quality-scripts": "dev-main",
