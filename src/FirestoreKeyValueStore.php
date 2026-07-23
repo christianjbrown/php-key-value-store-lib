@@ -35,7 +35,7 @@ final class FirestoreKeyValueStore implements FirestoreKeyValueStoreInterface
             return null;
         }
 
-        $expiresAt = $this->readExpiresAt($snapshot);
+        $expiresAt = self::readExpiresAt($snapshot);
         if (null === $expiresAt) {
             return null;
         }
@@ -50,7 +50,7 @@ final class FirestoreKeyValueStore implements FirestoreKeyValueStoreInterface
             return null;
         }
 
-        $expiresAt = $this->readExpiresAt($snapshot);
+        $expiresAt = self::readExpiresAt($snapshot);
         if (null !== $expiresAt) {
             if ($expiresAt < time()) {
                 return null;
@@ -80,7 +80,7 @@ final class FirestoreKeyValueStore implements FirestoreKeyValueStoreInterface
         return $this;
     }
 
-    private function readExpiresAt(DocumentSnapshot $snapshot): ?int
+    private static function readExpiresAt(DocumentSnapshot $snapshot): ?int
     {
         $expiresAt = $snapshot->get(self::FIELD_EXPIRES_AT);
         if (!is_int($expiresAt)) {

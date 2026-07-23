@@ -136,6 +136,9 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
   PHPStan understands with no docblock.
 - Dependencies are constructor-injected and typed against interfaces (`EntityManagerInterface`) or the
   concrete external SDK class (`SecretManagerServiceClient`) so everything is mockable.
+- **A method that does not use `$this` must be `static`** (called via `self::`) — a stateless helper is
+  static. Enforced for private methods by the shared `RequireStaticPrivateMethodRule` PHPStan rule (via
+  `php-code-quality-scripts`' `config/phpstan.neon`); interface/override methods stay instance.
 
 ### Deliberate deviation: the abstract mapped-superclass
 
