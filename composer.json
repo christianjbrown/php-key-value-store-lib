@@ -1,5 +1,5 @@
 {
-    "name": "christianjbrown/php-key-value-store-lib",
+    "name": "christianjbrown/key-value-store",
     "description": "A thin, strongly-typed PHP 8.5+ library of interchangeable key-value store implementations (database, Google Secret Manager, Google Firestore, in-memory) behind a single mockable interface.",
     "type": "library",
     "license": "MIT",
@@ -24,7 +24,7 @@
         "google/cloud-secret-manager": "^2.0"
     },
     "require-dev": {
-        "christianjbrown/php-code-quality-scripts": "dev-main",
+        "christianjbrown/code-quality-scripts": "dev-main",
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^13.0",
         "google/cloud-firestore": "^1.55 || ^2.0"
@@ -68,7 +68,7 @@
     "repositories": [
         {
             "type": "github",
-            "url": "git@github.com:christianjbrown/php-code-quality-scripts.git"
+            "url": "git@github.com:christianjbrown/code-quality-scripts-php.git"
         }
     ],
     "suggest": {

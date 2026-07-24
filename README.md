@@ -1,6 +1,6 @@
 # Key-Value Store
 
-[![CI](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/christianjbrown/php-key-value-store-lib/actions/workflows/ci.yml)
+[![CI](https://github.com/christianjbrown/key-value-store-php/actions/workflows/ci.yml/badge.svg)](https://github.com/christianjbrown/key-value-store-php/actions/workflows/ci.yml)
 
 A small, strongly-typed PHP library of interchangeable **key-value stores**. Every store hides
 behind one tiny contract — `KeyValueStoreInterface` — so you can read, write, and update a single
@@ -36,7 +36,7 @@ oblivious to the backing store.
 For your composer-enabled project:
 
 ```bash
-composer require christianjbrown/php-key-value-store-lib
+composer require christianjbrown/key-value-store
 ```
 
 

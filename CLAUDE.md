@@ -25,7 +25,7 @@ Four stores ship today:
 
 Binaries install into `bin/` (Composer `bin-dir`), not `vendor/bin/`. Both `bin/` and `vendor/` are
 gitignored and Composer-installed, so run `composer install` first. The style tooling comes from the
-private `christianjbrown/php-code-quality-scripts` dev dependency: `check-style` lints with
+private `christianjbrown/code-quality-scripts` dev dependency: `check-style` lints with
 **PHP_CodeSniffer 4** using the `ChristianBrown` standard (slevomat sniffs plus PSR/PEAR/Squiz/Generic),
 while **php-cs-fixer** (`@PhpCsFixer`/`@Symfony`) handles formatting; installing it needs
 SSH/`COMPOSER_AUTH` access to the private repo.
@@ -138,14 +138,14 @@ Everything lives flat under the `ChristianBrown\KeyValueStore\` namespace (`src/
   concrete external SDK class (`SecretManagerServiceClient`) so everything is mockable.
 - **A method that does not use `$this` must be `static`** (called via `self::`) — a stateless helper is
   static. Enforced for private methods by the shared `RequireStaticPrivateMethodRule` PHPStan rule (via
-  `php-code-quality-scripts`' `config/phpstan.neon`); interface/override methods stay instance.
+  `code-quality-scripts`' `config/phpstan.neon`); interface/override methods stay instance.
 
 ### Deliberate deviation: the abstract mapped-superclass
 
 `AbstractDatabaseKeyValueStoreEntity` is the one class that is **`abstract`, not `final`** — it is a
 Doctrine `#[ORM\MappedSuperclass]`, whose entire purpose is to be extended by a consumer's concrete
 `#[ORM\Entity]`. This is an intentional, isolated exception to the "every concrete class is final"
-rule (the same kind of carve-out as `php-gcp-function-lib`'s `AbstractJsonResponse`). Keep it abstract.
+rule (the same kind of carve-out as `cloud-run-function-lib`'s `AbstractJsonResponse`). Keep it abstract.
 Its public accessors are `final` (enforced by the `final_public_method_for_abstract_class` fixer rule),
 so tests exercise it through a concrete fixture subclass (`Tests\TestDatabaseKeyValueStoreEntity`)
 rather than a partial mock — you cannot mock a `final` method. Do not introduce any other abstract base
